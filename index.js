@@ -20,10 +20,25 @@ async function run() {
   try {
     await client.connect();
 
+    // USER COLLECTION
+    const userCollection = client.db("tooldo").collection("users");
+
     // TEAM MEMBER COLLECTION
     const teamMemberCollection = client.db("tooldo").collection("team-members");
 
     // API"S
+
+    // Getting token ans saving users email in db
+    app.put("/token", async (req, res) => {
+      const { userInfo } = req.body;
+      const doc = {
+        $set: userInfo,
+      };
+      const filter = { email: userInfo.email };
+      const option = { upsert: true };
+      const result = await userCollection.updateOne(filter, doc, option);
+      res.send(result);
+    });
 
     // GET ALL TEAM MEMBERS
     app.get("/teamMember", async (req, res) => {
