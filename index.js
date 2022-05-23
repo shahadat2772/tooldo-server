@@ -22,7 +22,6 @@ function verifyJWT(req, res, next) {
     if (err) {
       return res.status(403).send({ message: "forbidden access" });
     }
-    console.log("decoded", decoded);
     req.decoded = decoded;
     next();
   });
@@ -44,19 +43,22 @@ async function run() {
     // USER COLLECTION
     const userCollection = client.db("tooldo").collection("users");
 
+    // ITEMS COLLECTION
+    const itemsCollection = client.db("tooldo").collection("items");
+
     // TEAM MEMBER COLLECTION
     const teamMemberCollection = client.db("tooldo").collection("team-members");
 
     // Verify ADMIN
-    function verifyAdmin(req, res, next) {
-      const email = req.decoded;
+    async function verifyAdmin(req, res, next) {
+      const email = req?.decoded?.email;
       const filter = { email };
-      const user = userCollection.findOne(filter);
+      const user = await userCollection.findOne(filter);
       const role = user?.role;
       if (role === "admin") {
         next();
       } else {
-        res.status(403).send({ message: "forbidden access" });
+        return res.status(403).send({ message: "forbidden access" });
       }
     }
 
@@ -81,7 +83,7 @@ async function run() {
     });
 
     // GET ALL TEAM MEMBERS
-    app.get("/teamMember", verifyJWT, async (req, res) => {
+    app.get("/teamMember", async (req, res) => {
       const members = await teamMemberCollection.find({}).toArray();
       res.send(members);
     });
@@ -92,6 +94,28 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const member = await teamMemberCollection.findOne(query);
       res.send(member);
+    });
+
+    // CHECKING IS ADMIN OR not
+    app.post("/isAdmin", async (req, res) => {
+      const { email } = req.body;
+      const filter = { email };
+      const user = await userCollection.findOne(filter);
+      const result = { role: user?.role };
+      res.send(result);
+    });
+
+    // GET ALL ITEMS
+    app.get("/items", async (req, res) => {
+      const items = await itemsCollection.find({}).toArray();
+      res.send(items);
+    });
+
+    // ITEM BY ID
+    app.get("/item/:id", (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      // const
     });
   } finally {
     // await client.close();
