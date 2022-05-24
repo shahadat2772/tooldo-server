@@ -154,6 +154,15 @@ async function run() {
       res.send(orders);
     });
 
+    // GET ORDER BY ID
+    app.get("/order/:id", verifyJWT, async (req, res) => {
+      const id = req?.params?.id;
+      const filter = { _id: ObjectId(id) };
+      const order = await ordersCollection.findOne(filter);
+
+      res.send(order);
+    });
+
     // DELETE ORDER BY ID
     app.delete("/delete", verifyJWT, async (req, res) => {
       const { order } = req.body;
