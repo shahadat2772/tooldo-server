@@ -46,6 +46,9 @@ async function run() {
     // ITEMS COLLECTION
     const itemsCollection = client.db("tooldo").collection("items");
 
+    // ORDERS COLLECTION
+    const ordersCollection = client.db("tooldo").collection("orders");
+
     // TEAM MEMBER COLLECTION
     const teamMemberCollection = client.db("tooldo").collection("team-members");
 
@@ -112,10 +115,44 @@ async function run() {
     });
 
     // ITEM BY ID
-    app.get("/item/:id", (req, res) => {
-      const id = req.params.id;
+    app.get("/item/:id", async (req, res) => {
+      const id = req?.params?.id;
       const query = { _id: ObjectId(id) };
-      // const
+      const item = await itemsCollection.findOne(query);
+      res.send(item);
+    });
+
+    // ADD AN ORDER
+    app.post("/order", verify, async (req, res) => {
+      const { order } = req.body;
+
+      const result = await ordersCollection.insertOne(order);
+      const filter = { name: order.itemName };
+
+      const item = await itemsCollection.findOne(filter);
+      console.log(item);
+
+      const orderQuantity = parseInt(order.quantity);
+      const lastAvailableQuant = parseInt(item.availableQuant);
+      const newAvailableQuant = lastAvailableQuant - orderQuantity;
+
+      const doc = {
+        $set: {
+          availableQuant: newAvailableQuant,
+        },
+      };
+
+      const updateStoke = await itemsCollection.updateOne(filter, doc);
+      res.send(result);
+    });
+
+    // GET ORDERS BY EMAIL
+    app.get("/orders/:email", verifyJWT, async (req, res) => {
+      const email = req?.params?.email;
+      const filter = { email: email };
+      const orders = await ordersCollection.find(filter).toArray();
+      console.log(orders);
+      res.send(orders);
     });
   } finally {
     // await client.close();
