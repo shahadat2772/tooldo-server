@@ -77,6 +77,7 @@ async function run() {
     // Getting token ans saving users email in db
     app.put("/token", async (req, res) => {
       const { userInfo } = req.body;
+
       const doc = {
         $set: userInfo,
       };
@@ -236,6 +237,14 @@ async function run() {
     app.get("/review", async (req, res) => {
       const result = await reviewsCollection.find({}).toArray();
       res.send(result);
+    });
+
+    // GET USER INFO BY EMAIL
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const user = await userCollection.findOne(filter);
+      res.send(user);
     });
   } finally {
     // await client.close();
