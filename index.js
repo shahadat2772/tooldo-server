@@ -56,6 +56,9 @@ async function run() {
     // TEAM MEMBER COLLECTION
     const teamMemberCollection = client.db("tooldo").collection("team-members");
 
+    // REVIEWS COLLECTION
+    const reviewsCollection = client.db("tooldo").collection("reviews");
+
     // Verify ADMIN
     async function verifyAdmin(req, res, next) {
       const email = req?.decoded?.email;
@@ -219,6 +222,13 @@ async function run() {
         },
       };
       const result = await ordersCollection.updateOne(filter, doc);
+      res.send(result);
+    });
+
+    // Adding a review
+    app.post("/review", verifyJWT, async (req, res) => {
+      const { review } = req.body;
+      const result = await reviewsCollection.insertOne(review);
       res.send(result);
     });
   } finally {
