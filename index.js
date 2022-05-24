@@ -231,6 +231,12 @@ async function run() {
       const result = await reviewsCollection.insertOne(review);
       res.send(result);
     });
+
+    // GET ALL REVIEWS
+    app.get("/review", async (req, res) => {
+      const result = await reviewsCollection.find({}).toArray();
+      res.send(result);
+    });
   } finally {
     // await client.close();
   }
