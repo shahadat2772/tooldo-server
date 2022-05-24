@@ -4,6 +4,9 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(
+  "sk_test_51L105BIxM8sRxo2m2ImDa0Dfed0uNX24xpabivNaB9S2g0gBEqod8R4YCQCTQIPDhQkfUHsTEbckhA3lB7A0jW60006zgu39kC"
+);
 
 // MiddleWere
 app.use(express.json());
@@ -29,6 +32,7 @@ function verifyJWT(req, res, next) {
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const verify = require("jsonwebtoken/verify");
+const { default: Stripe } = require("stripe");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x7jic.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -185,6 +189,36 @@ async function run() {
 
       const updateStoke = await itemsCollection.updateOne(filterByName, doc);
 
+      res.send(result);
+    });
+
+    // CREATE-PAYMENT-INTENT
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { totalPrice } = req.body;
+      const payableAmount = totalPrice * 100;
+
+      const paymentIntents = await stripe.paymentIntents.create({
+        amount: payableAmount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({ clientSecret: paymentIntents.client_secret });
+    });
+
+    // CONFIRM AN ORDER
+    app.post("/confirmOrder", verifyJWT, async (req, res) => {
+      const { info } = req.body;
+      const id = info?.id;
+      const transactionId = info.transactionId;
+      const filter = { _id: ObjectId(id) };
+      const doc = {
+        $set: {
+          transactionId: transactionId,
+          paid: "true",
+        },
+      };
+      const result = await ordersCollection.updateOne(filter, doc);
       res.send(result);
     });
   } finally {
