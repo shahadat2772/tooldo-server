@@ -151,8 +151,32 @@ async function run() {
       const email = req?.params?.email;
       const filter = { email: email };
       const orders = await ordersCollection.find(filter).toArray();
-      console.log(orders);
       res.send(orders);
+    });
+
+    // DELETE ORDER BY ID
+    app.delete("/delete", verifyJWT, async (req, res) => {
+      const { order } = req.body;
+      const orderId = order._id;
+      const filter = { _id: ObjectId(orderId) };
+      const result = await ordersCollection.deleteOne(filter);
+
+      const filterByName = { name: order.itemName };
+      const item = await itemsCollection.findOne(filterByName);
+
+      const orderQuantity = parseInt(order.quantity);
+      const lastAvailableQuant = parseInt(item.availableQuant);
+      const newAvailableQuant = lastAvailableQuant + orderQuantity;
+
+      const doc = {
+        $set: {
+          availableQuant: newAvailableQuant,
+        },
+      };
+
+      const updateStoke = await itemsCollection.updateOne(filterByName, doc);
+
+      res.send(result);
     });
   } finally {
     // await client.close();
