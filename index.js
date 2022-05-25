@@ -60,6 +60,9 @@ async function run() {
     // REVIEWS COLLECTION
     const reviewsCollection = client.db("tooldo").collection("reviews");
 
+    // INQUIRY COLLECTION
+    const inquiriesCollection = client.db("tooldo").collection("inquiries");
+
     // Verify ADMIN
     async function verifyAdmin(req, res, next) {
       const email = req?.decoded?.email;
@@ -285,6 +288,13 @@ async function run() {
     app.post("/addProduct", verifyJWT, verifyAdmin, async (req, res) => {
       const { product } = req.body;
       const result = await itemsCollection.insertOne(product);
+      res.send(result);
+    });
+
+    // SAVE INQUIRIES TO DB
+    app.post("/addInquiry", async (req, res) => {
+      const { inquiry } = req.body;
+      const result = await inquiriesCollection.insertOne(inquiry);
       res.send(result);
     });
   } finally {
