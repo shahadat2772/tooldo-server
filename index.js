@@ -33,6 +33,7 @@ function verifyJWT(req, res, next) {
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const verify = require("jsonwebtoken/verify");
 const { default: Stripe } = require("stripe");
+const { use } = require("express/lib/application");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x7jic.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -245,6 +246,19 @@ async function run() {
       const filter = { email: email };
       const user = await userCollection.findOne(filter);
       res.send(user);
+    });
+
+    // UPDATE USER INFO WITH ID
+    app.post("/updateProfileInfo/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const { updatedInfo } = req.body;
+
+      const updatedDoc = {
+        $set: updatedInfo,
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
     });
   } finally {
     // await client.close();
