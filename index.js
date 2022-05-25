@@ -75,7 +75,7 @@ async function run() {
 
     // API"S
 
-    // Getting token ans saving users email in db
+    // Getting token and saving users email in db
     app.put("/token", async (req, res) => {
       const { userInfo } = req.body;
 
@@ -111,7 +111,7 @@ async function run() {
     // CHECKING IS ADMIN OR not
     app.post("/isAdmin", async (req, res) => {
       const { email } = req.body;
-      const filter = { email };
+      const filter = email;
       const user = await userCollection.findOne(filter);
       const result = { role: user?.role };
       res.send(result);
@@ -139,7 +139,6 @@ async function run() {
       const filter = { name: order.itemName };
 
       const item = await itemsCollection.findOne(filter);
-      console.log(item);
 
       const orderQuantity = parseInt(order.quantity);
       const lastAvailableQuant = parseInt(item.availableQuant);
@@ -241,15 +240,21 @@ async function run() {
     });
 
     // GET USER INFO BY EMAIL
-    app.get("/user/:email", async (req, res) => {
+    app.get("/user/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const user = await userCollection.findOne(filter);
       res.send(user);
     });
 
+    // GET ALL USER
+    app.get("/users", verifyJWT, async (req, res) => {
+      const result = await userCollection.find({}).toArray();
+      res.send(result);
+    });
+
     // UPDATE USER INFO WITH ID
-    app.post("/updateProfileInfo/:id", async (req, res) => {
+    app.post("/updateProfileInfo/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const { updatedInfo } = req.body;
@@ -258,6 +263,28 @@ async function run() {
         $set: updatedInfo,
       };
       const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    // MAKE ADMIN BY EMAIL
+    app.post("/makeAdmin", verifyJWT, verifyAdmin, async (req, res) => {
+      const { userInfo } = req.body;
+
+      const email = userInfo?.email;
+      const filter = { email: email };
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    // ADD PRODUCT
+    app.post("/addProduct", verifyJWT, verifyAdmin, async (req, res) => {
+      const { product } = req.body;
+      const result = await itemsCollection.insertOne(product);
       res.send(result);
     });
   } finally {
