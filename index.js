@@ -4,9 +4,7 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const stripe = require("stripe")(
-  "sk_test_51L105BIxM8sRxo2m2ImDa0Dfed0uNX24xpabivNaB9S2g0gBEqod8R4YCQCTQIPDhQkfUHsTEbckhA3lB7A0jW60006zgu39kC"
-);
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 // MiddleWere
 app.use(express.json());
