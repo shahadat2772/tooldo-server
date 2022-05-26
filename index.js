@@ -220,7 +220,7 @@ async function run() {
       const doc = {
         $set: {
           transactionId: transactionId,
-          paid: "true",
+          status: "paid",
         },
       };
       const result = await ordersCollection.updateOne(filter, doc);
