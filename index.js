@@ -32,6 +32,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const verify = require("jsonwebtoken/verify");
 const { default: Stripe } = require("stripe");
 const { use } = require("express/lib/application");
+const { response } = require("express");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x7jic.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -220,7 +221,7 @@ async function run() {
       const doc = {
         $set: {
           transactionId: transactionId,
-          status: "paid",
+          paid: "true",
         },
       };
       const result = await ordersCollection.updateOne(filter, doc);
@@ -293,6 +294,25 @@ async function run() {
     app.post("/addInquiry", async (req, res) => {
       const { inquiry } = req.body;
       const result = await inquiriesCollection.insertOne(inquiry);
+      res.send(result);
+    });
+
+    // GET ALL ORDERS
+    app.get("/getOrders", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await ordersCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    // SETTING ORDER STATUS APPROVED
+    app.get("/approve/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await ordersCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
   } finally {
