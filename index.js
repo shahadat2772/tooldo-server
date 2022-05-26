@@ -126,7 +126,7 @@ async function run() {
     });
 
     // ITEM BY ID
-    app.get("/item/:id", async (req, res) => {
+    app.get("/item/:id", verifyJWT, async (req, res) => {
       const id = req?.params?.id;
       const query = { _id: ObjectId(id) };
       const item = await itemsCollection.findOne(query);
@@ -134,7 +134,7 @@ async function run() {
     });
 
     // ADD AN ORDER
-    app.post("/order", verify, async (req, res) => {
+    app.post("/order", verifyJWT, async (req, res) => {
       const { order } = req.body;
 
       const result = await ordersCollection.insertOne(order);
@@ -313,6 +313,15 @@ async function run() {
         },
       };
       const result = await ordersCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    // DELETE ITEM BY ID
+    app.delete("/deleteItem", verifyJWT, verifyAdmin, async (req, res) => {
+      const { product } = req.body;
+      const productId = product._id;
+      const filter = { _id: ObjectId(productId) };
+      const result = await itemsCollection.deleteOne(filter);
       res.send(result);
     });
   } finally {
